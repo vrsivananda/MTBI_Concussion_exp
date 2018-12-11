@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>My experiment</title>
+        <script src="jspsych-6.0.4/jspsych.js"></script>
+        <script src="jspsych-6.0.4/plugins/jspsych-html-keyboard-response.js"></script>
+        <script src="jspsych-6.0.4/plugins/jspsych-video.js"></script>
+        <script src="jspsych-6.0.4/plugins/jspsych-fullscreen.js"></script>
+        <script src="jspsych-6.0.4/plugins/jspsych-call-function.js"></script>
+        <script src='canvas-arrow/canvas-arrow.js'></script>
+        <script src='screenfull/src/screenfull.js'></script>
+        <link href="jspsych-6.0.4/css/jspsych.css" rel="stylesheet" type="text/css"></link>
+    </head>
+    <body></body>
+    <script>
+        
+    var fullscreen_trial = {
+        type: 'fullscreen',
+        message: '<p>The experiment will switch to full screen mode when you press the button below.</p>' + 
+            '<p>Click on the center of the fixation cross to play the video and start the data collection.</p>' + 
+            '<p>After 30 seconds, the trial ends and the data will be displayed on your screen.</p>',
+        fullscreen_mode: true
+    };
+    
+    var windowHeight;
+    var windowWidth;
+    
+    var get_width_and_height = {
+        type: 'call-function',
+        func: function(){
+            windowHeight = window.innerHeight;
+            windowWidth = window.innerWidth;
+            console.log(windowHeight);
+            console.log(windowWidth);
+        }
+    };
+
+    var video_trial = {
+        type: 'video',
+        sources: ['E2 Hang Gliding Rio.mp4'],
+        autoplay: false,
+        height: function(){
+            return windowHeight;
+        },
+        width: function(){
+            return windowWidth;
+        }
+    }
+
+    jsPsych.init({
+        timeline: [
+            fullscreen_trial,
+            get_width_and_height,
+            video_trial
+            ],
+        on_finish: function(){
+            jsPsych.data.displayData('json');
+        }
+    })
+
+    </script>
+</html>

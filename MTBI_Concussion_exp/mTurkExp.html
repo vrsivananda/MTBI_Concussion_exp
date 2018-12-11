@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <!--
+       Most of the functions below are written by Jason Carpenter.
+       GitHub: https://github.com/jmcarpenter2
+    -->
+    <title>mTurk Short Survey</title>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+    <script src="jspsych-6.0.4/jspsych.js"></script>
+    <link href="jspsych-6.0.4/css/jspsych.css" rel="stylesheet" type="text/css"></link>
+    <!--Your jsPsych plugins below this line-->
+    <script src="jspsych-6.0.4/plugins/jspsych-instructions.js"></script>
+    <script src="jspsych-6.0.4/plugins/jspsych-video.js"></script>
+    <script src="jspsych-6.0.4/plugins/jspsych-fullscreen.js"></script>
+    <script src="jspsych-6.0.4/plugins/jspsych-call-function.js"></script>
+    <script src='canvas-arrow/canvas-arrow.js'></script>
+    <script src='screenfull/src/screenfull.js'></script>
+    <!--Your jsPsych plugins above this line-->
+    <script src="jspsych-6.0.4/plugins/jspsych-external-html.js"></script>
+    <script src="jspsych-6.0.4/plugins/jspsych-html-keyboard-response.js"></script>
+    <script src="jspsych-6.0.4/plugins/jspsych-html-button-response.js"></script>
+    <script src="videoList.js"></script>
+</head>
+<body>
+</body>
+<script>
+    
+        //Data switches
+        var saveLocally = 1;	// 0: Nothing.      1: Download CSV file
+        var displayData = 0;  	// 0: Nothing.      1: Display data on browser
+        var launchOnline = 0;	// 0: Nothing.		1: Save to database, consent form, completion code generation, dummy variables created for all 3 IDs
+        var tableName = 'sample_exp_no_psiturk'; //Name of the table in the database
+        
+        
+        //Get the info from mTurk
+        var turkInfo = jsPsych.turk.turkInfo();
+        
+        //If we're not on mTurk, we create our own values
+        if(turkInfo.outsideTurk === true){
+            
+            // Use the timestamp as a unique id (specific to the second)
+            var timestamp = Math.floor(Date.now()/1000);
+            
+            workerId = "workerId_" + timestamp;
+            assignmentId = "assignmentId_" + timestamp;
+            hitId = "hitId_" + timestamp;
+            
+        }
+        //Else we're on mTurk and we get the values
+        else{
+          
+            var workerId = turkInfo.workerId;
+            var assignmentId = turkInfo.assignmentId;
+            var hitId = turkInfo.hitId;
+        
+        }
+        
+        //Print out to console to check
+        console.log("workerId: " + workerId);
+        console.log("assignmentId: " + assignmentId);
+        console.log("hitId: " + hitId);
+    	
+        
+        //------------------- Your code below this line -------------------
+        
+        //Make the video trials with breaks
+        var videoTrials = makeVideoTrials();
+        
+
+        var timeline = []; //Keep this
+        timeline.push(makeFullscreenTrial());
+        timeline.push(makeInstructions());
+        timeline = timeline.concat(videoTrials);
+        timeline.concat(makeEndExperimentScreen());
+        
+        
+        //------------------- Your code above this line -------------------
+        
+        if(launchOnline){
+        	timeline.unshift(createConsentFormBlock())
+	        timeline.push(createCompletionCodeBlock());
+	        timeline.push(createGoodbyeBlock());
+    	}
+
+        //Initiate the experiment
+        jsPsych.init({
+            timeline: timeline,
+            on_finish: function(){ //Execute this when the experiment finishes
+                if(saveLocally == true){
+                    jsPsych.data.get().localSave('csv','testSave.csv'); //Save the data locally in a .csv file
+                }
+                if(displayData == true){
+                    jsPsych.data.displayData(); //Display the data onto the browser screen
+                }
+            },
+            on_trial_finish: function(){ //Execute this after every trial
+                if (launchOnline == true){
+                    save_data(tableName, [jsPsych.data.get().last(1).values()[0]]);
+                }
+            }
+        });
+        
+        
+        //==============================
+        //========= FUNCTIONS ==========
+        //==============================
+        
+        //For fullscreen
+        function makeFullscreenTrial(){
+        
+            return {
+                type: 'fullscreen',
+                message: '<p>Hello, and welcome to the experiment!</p>' + 
+                    '<p>The experiment will switch to full screen mode when you press the button below.</p>',
+                fullscreen_mode: true
+            };
+            
+        }
+        
+        //Instructions
+        function makeInstructions(){
+            
+            let page1 = '<p> A cross will appear on the screen. When you click on the center of the cross, an arrow will appear and the video behind the cross will play.</p>' +
+                '<p>The video shown will exhibit some form of motion from a first-person perspective, such as paragliding. </p>' +
+                '<p>Once you click on the center of the cross, the mouse cursor will be connected to the tip of the arrow. Use your mouse to indicate the direction and speed in which you feel like you\'re moving.</p>' + 
+                '<p>For example, If you feel like you\'re moving to the left, then move the mouse to the left. If you feel like you\'re moving quickly, then move the mouse further away from the cross to make the arrow longer.</p>' +
+                '<p>Click \'Next\' to continue and then <strong>click the center of the cross to start the trial</strong>.</p>'
+                
+                
+            
+            return {
+                type: 'instructions',
+                pages: [page1],
+                show_clickable_nav: true
+            };
+            
+        }
+        
+        //Make the video trials
+        function makeVideoTrials(){
+            
+            var tempArray = []
+            
+            //For loop that makes the trials
+            for(let i = 0; i < videoList.length; i++){
+                
+                //Get the video name
+                let videoName = videoList[i];
+                
+                //Make the path to the video
+                let videoPath = 'videos/' + videoName;
+                
+                //Create the video trial
+                let videoTrial = {
+                    type: 'video',
+                    sources: [videoPath],
+                    autoplay: false,
+                    height: function(){
+                        return window.innerHeight;
+                    },
+                    width: function(){
+                        return window.innerWidth;
+                    }
+                };
+                
+                //Push the video into the array
+                tempArray.push(videoTrial);
+                
+                //Only make the screen if it is not the last trial
+                if(i !== videoList.length - 1){
+                    
+                    //Create the inter-trial screen
+                    let interTrialScreen = {
+                        type: 'html-button-response',
+                        stimulus: function(){
+                            var output = '<p class="instructions">Great work on the previous trial!</p>' +
+                                '<p class="instructions">Whenever you are ready, click on the button below to continue to the next trial.</p>';
+                            
+                            return output;
+                        },
+                        choices: ['Continue'],
+                        timing_post_trial: 10
+                    };   
+                    
+                    //Push the inter-trial screen into the array
+                    tempArray.push(interTrialScreen);
+                }
+            }
+            //Return the array
+            return tempArray;
+        }
+        
+        //Ending screen
+        function makeEndExperimentScreen(){
+            
+            let page1 = '<p> Thank you for participating in the experiment.</p>' +
+                '<p>. </p>' +
+                '<p>Click \'Next\' to end the experiment.</p>'
+                               
+            
+            return {
+                type: 'instructions',
+                pages: [page1],
+                show_clickable_nav: true
+            };
+            
+            
+        }
+        
+        
+        //-------- Trial-Making --------
+        
+        //Creates a consent form trial and returns it
+        function createConsentFormBlock(){
+
+	        return {
+	          type:'external-html',
+	          url: "consentForm.html",
+	          cont_btn: "startExperimentButton",
+	          check_fn: check_consent
+	        };
+        }
+        
+        //Create trial to generate completion code, and check if they've earned a bonus on this session
+        function createCompletionCodeBlock(){
+        	
+	        return {
+	            type: 'html-keyboard-response',
+	            stimulus: '<center><p class="loader" style="margin-top: 20%">Loading...</p></center>',
+	            timing_response: 1,
+	            trial_duration: 10,
+	            //display_element: $('#vert-center'),
+	            on_finish: function()
+	            {
+	                // Create completionCode and check if it exists in the database. Keep running until a unique one is generated
+	                completionCode = Math.floor(Math.random() * 9000000 + 1000000); 
+	                checkID(false, completionCode, 'completion_code', tableName, function(exists){getNewSubID(exists);}); 
+	            },
+	            timing_post_trial: 0
+	        };
+        }
+        
+        //Create trial to thank the participate, tell them about their bonus, and display their completionCode completion code
+        function createGoodbyeBlock(){
+        	
+	        return {
+	            type: 'html-button-response',
+	            stimulus: function()
+	            {
+	                var output = '<p class="instructions">Thank you for participating!</p>';
+	                var data = jsPsych.data.get().last(1).values()[0];
+	                var completionCode = data.completion_code;
+	                    
+	                // Display completionCode completion code
+	                output += '<p class="instructions"> Your survey code is: <strong>'+ completionCode + '</strong></p>' +
+	                    '<p class="instructions">Please paste this number back into the box at the mTurk HIT website.</p>' +
+	                    '<p class="instructions"><i>Do <b>NOT</b> close this window until you have submitted the above code.</i></p>';
+	                
+	                return output;
+	            },
+	            choices: ['I have submitted the code. Exit the experiment.'],
+	            timing_post_trial: 0
+	        };
+        }
+        
+        //-------- Functionality --------
+        
+        // Function to draw parameters from the URL
+        function $_GET(param) 
+        {
+            var vars = {};
+            window.location.href.replace( 
+                /[?&]+([^=&]+)=?([^&]*)?/gi, // regexp
+                function( m, key, value ) { // callback
+                    vars[key] = value !== undefined ? value : '';
+                }
+            );
+
+            if ( param ) 
+            {
+                console.log(vars);
+                console.log(param);
+                return vars[param] ? vars[param] : null;    
+            }
+            return vars;
+        }
+        
+        // Function to check compare the inputted ID to all IDs of the IDType in the SQL database
+        function checkID(async, ID, IDType, data_table, callback)
+        {
+            $.ajax({
+                type:'post',
+                cache: false,
+                async: async,
+                url: 'checkSubID.php',
+                data: // Inputs into the .php script
+                {
+                    ID: ID,
+                    IDType: IDType,
+                    completeTrials: 3450,
+                    data_table: data_table
+                },
+                success: function(exists)  // Use whatever callback function is specified when calling the checkID function
+                {
+                    callback(exists);
+                },
+                error: function (xhr, ajaxOptions, thrownError) 
+                {
+                   alert(thrownError);
+               }
+           });
+        }
+        
+        // Callback function for checking if the completionCode exists
+        function getNewSubID(exists)
+        {
+            if (exists === '1' || exists === 1) // If the completionCode exists in the SQL database
+            {
+                completionCode = Math.floor(Math.random() * 9000000 + 1000000); // Generate new completionCode
+                checkID(false, completionCode, 'completion_code', tableName, function(existsNow){getNewSubID(existsNow);}); // Check if the new completionCode exists in the database
+            }
+            else // If the completionCode doesn't exist in the SQL database
+                jsPsych.data.addProperties({completion_code: completionCode}); // Add the completionCode to the data 
+        }
+        
+        //A function to save the data to the SQL table on the server.  This gets called at the end of the file.
+        function save_data(data_table,data){
+          
+            //Add data to the jsPsych data file
+            jsPsych.data.addProperties({
+                workerId: workerId,
+                assignmentId: assignmentId,
+                hitId: hitId
+            });
+          
+            //Use AJAX to post the data onto the server
+            $.ajax({
+                type:'post',
+                cache: false,
+                url: 'savedata.php',
+                data: {
+                    table: data_table,
+                    json: JSON.stringify(data),
+                },
+                success: function(output) { console.log(output); } // write the result to javascript console
+            });
+        }
+      
+        // sample function that might be used to check if a subject has given
+        // consent to participate.
+        function check_consent(elem) {
+          if ($('#consent_checkbox').is(':checked')) {
+            return true;
+          }
+          else {
+            alert("If you wish to participate, you must check the box next to the statement 'I agree to participate in this study.'");
+            return false;
+          }
+          return false;
+        };
+
+
+  </script>
+  </html>
