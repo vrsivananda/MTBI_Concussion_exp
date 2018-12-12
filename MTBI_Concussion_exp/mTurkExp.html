@@ -29,8 +29,9 @@
         //Data switches
         var saveLocally = 1;	// 0: Nothing.      1: Download CSV file
         var displayData = 0;  	// 0: Nothing.      1: Display data on browser
-        var launchOnline = 0;	// 0: Nothing.		1: Save to database, consent form, completion code generation, dummy variables created for all 3 IDs
-        var tableName = 'sample_exp_no_psiturk'; //Name of the table in the database
+        var launchOnline = 0;	// 0: Nothing.		1: Consent form, completion code generation
+        var saveToDatabase = 1;
+        var tableName = 'MTBI_Concussion_exp'; //Name of the table in the database
         
         
         //Get the info from mTurk
@@ -95,7 +96,7 @@
                 }
             },
             on_trial_finish: function(){ //Execute this after every trial
-                if (launchOnline == true){
+                if (saveToDatabase == true){
                     save_data(tableName, [jsPsych.data.get().last(1).values()[0]]);
                 }
             }
