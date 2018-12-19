@@ -7,19 +7,19 @@
     -->
     <title>mTurk Short Survey</title>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
-    <script src="jspsych-6.0.4/jspsych.js"></script>
-    <link href="jspsych-6.0.4/css/jspsych.css" rel="stylesheet" type="text/css"></link>
+    <script src="jspsych-6.0.5/jspsych.js"></script>
+    <link href="jspsych-6.0.5/css/jspsych.css" rel="stylesheet" type="text/css"></link>
     <!--Your jsPsych plugins below this line-->
-    <script src="jspsych-6.0.4/plugins/jspsych-instructions.js"></script>
-    <script src="jspsych-6.0.4/plugins/jspsych-video.js"></script>
-    <script src="jspsych-6.0.4/plugins/jspsych-fullscreen.js"></script>
-    <script src="jspsych-6.0.4/plugins/jspsych-call-function.js"></script>
+    <script src="jspsych-6.0.5/plugins/jspsych-instructions.js"></script>
+    <script src="jspsych-6.0.5/plugins/jspsych-video.js"></script>
+    <script src="jspsych-6.0.5/plugins/jspsych-fullscreen.js"></script>
+    <script src="jspsych-6.0.5/plugins/jspsych-call-function.js"></script>
     <script src='canvas-arrow/canvas-arrow.js'></script>
     <script src='screenfull/src/screenfull.js'></script>
     <!--Your jsPsych plugins above this line-->
-    <script src="jspsych-6.0.4/plugins/jspsych-external-html.js"></script>
-    <script src="jspsych-6.0.4/plugins/jspsych-html-keyboard-response.js"></script>
-    <script src="jspsych-6.0.4/plugins/jspsych-html-button-response.js"></script>
+    <script src="jspsych-6.0.5/plugins/jspsych-external-html.js"></script>
+    <script src="jspsych-6.0.5/plugins/jspsych-html-keyboard-response.js"></script>
+    <script src="jspsych-6.0.5/plugins/jspsych-html-button-response.js"></script>
     <script src="videoList.js"></script>
 </head>
 <body>
@@ -65,6 +65,9 @@
         
         //------------------- Your code below this line -------------------
         
+        //Prefix 'videos/' folder name to videoList
+        prefixVideoList();
+        
         //Make the video trials with breaks
         var videoTrials = makeVideoTrials();
         
@@ -87,6 +90,7 @@
         //Initiate the experiment
         jsPsych.init({
             timeline: timeline,
+            preload_video: videoList,
             on_finish: function(){ //Execute this when the experiment finishes
                 if(saveLocally == true){
                     jsPsych.data.get().localSave('csv','testSave.csv'); //Save the data locally in a .csv file
@@ -138,6 +142,15 @@
             
         }
         
+        function prefixVideoList(){
+            
+            //For loop that loops through the videoList 
+            for(let i = 0; i < videoList.length; i++){
+                videoList[i] = 'videos/' + videoList[i];
+            }
+            
+        }
+        
         //Make the video trials
         function makeVideoTrials(){
             
@@ -147,10 +160,7 @@
             for(let i = 0; i < videoList.length; i++){
                 
                 //Get the video name
-                let videoName = videoList[i];
-                
-                //Make the path to the video
-                let videoPath = 'videos/' + videoName;
+                let videoPath = videoList[i];
                 
                 //Create the video trial
                 let videoTrial = {
