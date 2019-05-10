@@ -5,12 +5,13 @@
        Most of the functions below are written by Jason Carpenter.
        GitHub: https://github.com/jmcarpenter2
     -->
-    <title>mTurk Short Survey</title>
+    <title>MTBI_Concussion_exp</title>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
     <script src="jspsych-6.0.5/jspsych.js"></script>
     <link href="jspsych-6.0.5/css/jspsych.css" rel="stylesheet" type="text/css"></link>
     <!--Your jsPsych plugins below this line-->
     <script src="jspsych-6.0.5/plugins/jspsych-instructions.js"></script>
+    <script src="jspsych-6.0.5/plugins/jspsych-dynamic-visual-feedback.js"></script>
     <script src="jspsych-6.0.5/plugins/jspsych-video.js"></script>
     <script src="jspsych-6.0.5/plugins/jspsych-fullscreen.js"></script>
     <script src="jspsych-6.0.5/plugins/jspsych-call-function.js"></script>
@@ -27,7 +28,7 @@
 <script>
     
         //Data switches
-        var saveLocally = 1;	// 0: Nothing.      1: Download CSV file
+        var saveLocally = 0;	// 0: Nothing.      1: Download CSV file
         var displayData = 0;  	// 0: Nothing.      1: Display data on browser
         var launchOnline = 0;	// 0: Nothing.		1: Consent form, completion code generation
         var saveToDatabase = 1;
@@ -65,8 +66,11 @@
         
         //------------------- Your code below this line -------------------
         
-        //Prefix 'videos/' folder name to videoList
-        prefixVideoList();
+        //Parameters
+        var nTrials = 10;
+        
+        //Prefix 'videos/' folder name to videoList and select a subset of them
+        var selectedVideoList = makeSelectedVideoList();
         
         //Make the video trials with breaks
         var videoTrials = makeVideoTrials();
@@ -74,7 +78,11 @@
 
         var timeline = []; //Keep this
         timeline.push(makeFullscreenTrial());
-        timeline.push(makeInstructions());
+        timeline.push(makeInstructions1());
+        timeline.push(makeDirectionalExampleVideo());
+        timeline.push(makeInstructions2());
+        timeline.push(makeSpeedExampleVideo());
+        timeline.push(makeInstructions3());
         timeline = timeline.concat(videoTrials);
         timeline.concat(makeEndExperimentScreen());
         
@@ -90,7 +98,7 @@
         //Initiate the experiment
         jsPsych.init({
             timeline: timeline,
-            preload_video: videoList,
+            preload_video: selectedVideoList,
             on_finish: function(){ //Execute this when the experiment finishes
                 if(saveLocally == true){
                     jsPsych.data.get().localSave('csv','testSave.csv'); //Save the data locally in a .csv file
@@ -124,14 +132,78 @@
         }
         
         //Instructions
-        function makeInstructions(){
+        function makeInstructions1(){
             
             let page1 = '<p> A cross will appear on the screen. When you click on the center of the cross, an arrow will appear and the video behind the cross will play.</p>' +
                 '<p>The video shown will exhibit some form of motion from a first-person perspective, such as paragliding. </p>' +
-                '<p>Once you click on the center of the cross, the mouse cursor will be connected to the tip of the arrow. Use your mouse to indicate the direction and speed in which you feel like you\'re moving.</p>' + 
+                '<p>Once you click on the center of the cross, the mouse cursor will be connected to the tip of the arrow. <b>Keep your eyes fixed on the cross, and use your mouse to indicate the direction and speed in which you feel like you\'re moving.</b></p>' + 
                 '<p>For example, If you feel like you\'re moving to the left, then move the mouse to the left. If you feel like you\'re moving quickly, then move the mouse further away from the cross to make the arrow longer.</p>' +
-                '<p>Click \'Next\' to continue and then <strong>click the center of the cross to start the trial</strong>.</p>'
+                '<p>Click \'Next\' to continue.</p>';
+            
+            let page2 = '<p> When you click the \'Next\' button below, a video will play.</p>' +
+                '<p>The video will show you that clicking the center of the cross will start the trial, and moving the mouse will move the arrow to indicate the direction that you feel you are moving in.</p>' +
+                '<p>Click \'Next\' to continue to the video.</p>';
                 
+                
+            
+            return {
+                type: 'instructions',
+                pages: [page1,
+                        page2],
+                show_clickable_nav: true
+            };
+            
+        }
+        
+        function makeDirectionalExampleVideo(){
+            return{
+                type: 'video',
+                sources: ['Kroger_Radial_Flow.mp4'],
+                height: function(){
+                    return window.innerHeight;
+                },
+                width: function(){
+                    return window.innerWidth;
+                }
+            }
+        }
+        
+        
+        function makeInstructions2(){
+            
+            let page1 = '<p> The previous video showed how you can indicate the direction with the arrow. You can also indicate the speed at which you are moving.</p>' +
+                '<p>The next video will show how you can indicate speen with the arrow. </p>' +
+                '<p>During the actual experiment, remember to click the center of the cross to start.</p>' + 
+                '<p>Click \'Next\' to start the second example video.</p>';                
+                
+            return {
+                type: 'instructions',
+                pages: [page1],
+                show_clickable_nav: true
+            };
+            
+        }
+        
+        function makeSpeedExampleVideo(){
+            return{
+                type: 'video',
+                sources: ['Motorcycle_Lamellar_Flow.mp4'],
+                height: function(){
+                    return window.innerHeight;
+                },
+                width: function(){
+                    return window.innerWidth;
+                }
+            }
+        }
+        
+        function makeInstructions3(){
+            
+            let page1 = '<p> The example videos showed how you can indicate the direction and speed with the arrow.</p>' + 
+                '<p><b>Remember to keep your eyes fixed on the cross during the entire trial.</b></p>' +
+                '<p>Remember to click the center of the cross to start the trial. </p>' +
+                '<p>This is the end of the instructions. </p>' +
+                '<p>Click \'Next\' to start the experiment.</p>';                
                 
             
             return {
@@ -142,29 +214,32 @@
             
         }
         
-        function prefixVideoList(){
+        function makeSelectedVideoList(){
             
             //For loop that loops through the videoList 
             for(let i = 0; i < videoList.length; i++){
                 videoList[i] = 'videos/' + videoList[i];
             }
+            //Randomly sample from the master videoList and return it
+            return jsPsych.randomization.sampleWithoutReplacement(videoList, nTrials);
+            
             
         }
         
         //Make the video trials
         function makeVideoTrials(){
             
-            var tempArray = []
+            var tempArray = [];
             
             //For loop that makes the trials
-            for(let i = 0; i < videoList.length; i++){
+            for(let i = 0; i < selectedVideoList.length; i++){
                 
                 //Get the video name
-                let videoPath = videoList[i];
+                let videoPath = selectedVideoList[i];
                 
                 //Create the video trial
                 let videoTrial = {
-                    type: 'video',
+                    type: 'dynamic-visual-feedback',
                     sources: [videoPath],
                     autoplay: false,
                     height: function(){
@@ -179,7 +254,7 @@
                 tempArray.push(videoTrial);
                 
                 //Only make the screen if it is not the last trial
-                if(i !== videoList.length - 1){
+                if(i !== selectedVideoList.length - 1){
                     
                     //Create the inter-trial screen
                     let interTrialScreen = {
@@ -192,7 +267,7 @@
                         },
                         choices: ['Continue'],
                         timing_post_trial: 10
-                    };   
+                    };
                     
                     //Push the inter-trial screen into the array
                     tempArray.push(interTrialScreen);

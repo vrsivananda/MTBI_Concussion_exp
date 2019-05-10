@@ -97,7 +97,7 @@ window.jsPsych = (function() {
       'auto_update_progress_bar': true,
       'auto_preload': true,
       'show_preload_progress_bar': true,
-      'max_load_time': 60000,
+      'max_load_time': 300000, //[sivaHack] 60000,
       'max_preload_attempts': 10,
       'default_iti': 0
     };
@@ -177,6 +177,7 @@ window.jsPsych = (function() {
           if(opts.max_load_time > 0){
             setTimeout(function(){
               if(!loaded && !loadfail){
+                console.log('Preload failed because max_load_time exceeded.'); //[sivaHack]
                 core.loadFail();
               }
             }, opts.max_load_time);
@@ -2342,6 +2343,9 @@ jsPsych.pluginAPI = (function() {
   };
 
     module.preloadVideo = function(video, callback_complete, callback_load) {
+      
+        //[sivaHack]
+        document.getElementById("jspsych-loading-progress-bar-container").appendChild(document.createElement("p")).appendChild(document.createTextNode("Please give the experiment 3 to 5 minutes to load."));
 
         // flatten the images array
         video = jsPsych.utils.flatten(video);
@@ -2357,6 +2361,7 @@ jsPsych.pluginAPI = (function() {
         }
 
         function preload_video(source, count){
+            console.log('loading: ' + source); //[sivaHack]
             count = count || 1;
             //based on option 4 here: http://dinbror.dk/blog/how-to-preload-entire-html5-video-before-play-solved/
             var request = new XMLHttpRequest();
@@ -2367,6 +2372,7 @@ jsPsych.pluginAPI = (function() {
                     var videoBlob = this.response;
                     video_buffers[source] = URL.createObjectURL(videoBlob); // IE10+
                     n_loaded++;
+                    console.log('Loaded: ' + source + '; Count: ' + count + '; nLoaded: ' + n_loaded); //[sivaHack]
                     loadfn(n_loaded);
                     if (n_loaded === video.length) {
                         finishfn();
@@ -2376,16 +2382,20 @@ jsPsych.pluginAPI = (function() {
 
             request.onerror = function(){
                 if(count < jsPsych.initSettings().max_preload_attempts){
+                    console.log('Load Error: ' + source + '; Count: ' + count); //[sivaHack]
                     setTimeout(function(){
                         preload_video(source, count+1)
                     }, 200);
                 } else {
+                    console.log('Load Failed: ' + source + '; Count: ' + count); //[sivaHack]
                     jsPsych.loadFail();
                 }
             }
             request.send();
         }
-
+        
+        console.log('Video array to be preloaded:'); //[sivaHack]
+        console.log(video); //[sivaHack]
         for (var i = 0; i < video.length; i++) {
             preload_video(video[i]);
         }

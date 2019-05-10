@@ -2,14 +2,14 @@
 <html>
     <head>
         <title>My experiment</title>
-        <script src="jspsych-6.0.4/jspsych.js"></script>
-        <script src="jspsych-6.0.4/plugins/jspsych-html-keyboard-response.js"></script>
-        <script src="jspsych-6.0.4/plugins/jspsych-video.js"></script>
-        <script src="jspsych-6.0.4/plugins/jspsych-fullscreen.js"></script>
-        <script src="jspsych-6.0.4/plugins/jspsych-call-function.js"></script>
+        <script src="jspsych-6.0.5/jspsych.js"></script>
+        <script src="jspsych-6.0.5/plugins/jspsych-html-keyboard-response.js"></script>
+        <script src="jspsych-6.0.5/plugins/jspsych-dynamic-visual-feedback.js"></script>
+        <script src="jspsych-6.0.5/plugins/jspsych-fullscreen.js"></script>
+        <script src="jspsych-6.0.5/plugins/jspsych-call-function.js"></script>
         <script src='canvas-arrow/canvas-arrow.js'></script>
         <script src='screenfull/src/screenfull.js'></script>
-        <link href="jspsych-6.0.4/css/jspsych.css" rel="stylesheet" type="text/css"></link>
+        <link href="jspsych-6.0.5/css/jspsych.css" rel="stylesheet" type="text/css"></link>
     </head>
     <body></body>
     <script>
@@ -36,8 +36,8 @@
     };
 
     var video_trial = {
-        type: 'video',
-        sources: ['E2 Hang Gliding Rio.mp4'],
+        type: 'dynamic-visual-feedback',
+        sources: ['videos/M1 Motorcycling Fast.mp4'],
         autoplay: false,
         height: function(){
             return windowHeight;
